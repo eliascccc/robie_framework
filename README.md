@@ -104,39 +104,15 @@ Jobs are tracked in SQLite (`audit.db`) with clear states:
 
 ---
 
-## IPC Protocol (handover.txt)
+## Handover concept
 
-The orchestrator and RPA communicate via a shared JSON file.
+The system uses a file-based "handover" mechanism to transfer control between the Python orchestrator and the external RPA.
 
-### Example:
+The handover file represents both:
+- the current system state
+- and the payload required for the next execution step
 
-```json
-{
-  "ipc_state": "job_queued",
-  "job_id": 20260324123001,
-  "job_type": "job1"
-}
-```
-
-### States:
-
-* `idle`
-* `job_queued`
-* `job_running`
-* `job_verifying`
-* `safestop`
-
----
-
-## Safety Model
-
-* No resume: crashed jobs do not continue
-* Watchdog timeout for RPA stalls
-* All critical errors → `safestop`
-* Manual recovery via:
-
-  * `reboot.flag`
-* System can kill external processes to reset environment
+This makes the orchestration explicit, inspectable, and robust.
 
 ---
 
