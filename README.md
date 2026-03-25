@@ -8,7 +8,7 @@ A lightweight local orchestrator for email- and data-driven automation, delegati
 
 This project is a lightweight local RPA orchestrator written in Python.
 
-It is designed as a simple alternative to heavy enterprise orchestrators,
+It is designed as an alternative to enterprise orchestrators,
 focusing on clarity, ease of modification, and running on a single machine.
 
 It does NOT replace RPA tools.
