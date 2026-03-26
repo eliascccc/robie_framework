@@ -15,7 +15,7 @@ It does NOT replace RPA tools.
 
 Instead, it orchestrates them:
 you still need a real RPA tool (Power Automate, UiPath Studio, Blue Prism, etc.)
-to perform screen-based automation.
+to perform screen-based automation. Think of this as the control around the RPA — not the robot itself.
 
 ---
 
@@ -25,7 +25,7 @@ to perform screen-based automation.
 ### Email-triggered job
 A user sends an email → Python validates and prepares the job → writes to `handover.json` → RPA executes UI actions → Python verifies and responds.
 
-### Data-driven job
+### Data-triggered job
 Python polls a data source → detects a valid case → prepares payload → signals RPA → RPA executes → Python verifies the outcome.
 
 
@@ -36,9 +36,9 @@ Example dashboard during runtime:
 
 ## Key Idea
 
-This project separates **orchestration** from **UI automation**:
+This project separates responsibilities:
 
-* The **back-end (this project)** handles:
+* The **Orchestrator (this project)** handles
 
   * job intake (email / data)
   * validation
@@ -46,7 +46,7 @@ This project separates **orchestration** from **UI automation**:
   * audit logging
   * system control
 
-* The **front-end RPA tool** handles:
+* The **RPA tool** handles:
 
   * clicks
   * keyboard input
@@ -55,25 +55,55 @@ This project separates **orchestration** from **UI automation**:
 They communicate through a file-based IPC mechanism (`handover.json`).
 
 ---
+## What this project does in more detail
+
+The orchestration is responsible for:
+
+* how jobs enter the system (e.g. via email)
+* how jobs are discovered autonomously (e.g. queries or data sources)
+* access control and validation
+* job state tracking and audit logging
+* preparing payloads and handing work over to an external RPA tool
+* verifying results after execution
+* handling failures and entering a controlled safestop state
+
+---
+
+## What this project is not
+
+You still need a real RPA tool to execute UI automation steps.
+
+This includes tools such as:
+
+* UiPath Studio
+* Microsoft Power Automate
+* Blue Prism
+* Robot Framework
+* RPA for Python
+* TagUI
+
+These tools execute the actual automation steps (clicks, keyboard input, screen interaction, etc.).
+
+---
 
 ## Architecture
 
-<img width="1140" height="1709" alt="workflow" src="https://github.com/user-attachments/assets/9f66751f-2356-43d3-a8fc-51450e34a654" />
+<img width="1140" height="1709" alt="workflow" src="https://github.com/user-attachments/assets/9e9b1135-76c9-40d6-9f7f-785cfbde715d" />
 
-The diagram defines the interaction:
+The diagram shows how:
 
-* Python (back-end) and RPA (front-end) run independently
+* The Orchestrator and the RPA tool run independently
 * Both operate in their own loops
-* State is synchronized via handover.json
+* State is synchronized via `handover.json`
 * Failures transition the system into safestop
-* Your front-end RPA tool must follow this model
+* Your RPA tool must follow this model
 
 
 ## Features
 
 * Email-driven job processing (personal inbox)
 * Shared inbox support (extensible)
-* Data-driven jobs (ERP/query simulation)
+* Data-driven jobs (ERP/data queries)
 * File-based IPC (`handover.json`)
 * SQLite audit logging (`job_audit.db`)
 * Crash-safe mode (`safestop`)
@@ -185,6 +215,7 @@ recordings/
 * File-based IPC only
 * Minimal error recovery (by design)
 
+
 ---
 ## Why not just use X?
 
@@ -216,16 +247,14 @@ Enterprise orchestrators (e.g. UiPath Orchestrator, Control Room):
 
 This project is intentionally:
 
-* Local-first
-* Lightweight
 * Designed for small teams (≈5–10 users)
 * Able to run on a single machine without admin rights
 
 ---
 
-### Why not use a workflow orchestrator (e.g. :contentReference[oaicite:0]{index=0})?
+### Why not use a workflow orchestrator?
 
-Workflow tools are built for:
+Workflow tools (e.g. Airflow, Prefect) are built for:
 
 * Scheduled pipelines
 * Data engineering workflows
