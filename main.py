@@ -29,7 +29,7 @@ from email import policy
 IpcState: TypeAlias = Literal["idle", "job_queued", "job_running", "job_verifying", "safestop"]
 JobType: TypeAlias = Literal["ping", "job1", "job2", "job3", "job4"]
 JobSourceType: TypeAlias = Literal["personal_inbox", "shared_inbox", "erp_query"]
-JobStatus: TypeAlias = Literal["REJECTED", "QUEUED", "RUNNING", "VERIFYING", "DONE", "FAIL"]
+JobStatus: TypeAlias = Literal["REJECTED", "QUEUED", "RUNNING", "VERIFYING", "FAIL", "DONE"]
 JobAction: TypeAlias = Literal["DELETE_ONLY", "REPLY_AND_DELETE", "QUEUE_RPA_JOB", "SKIP", "MOVE_BACK_TO_INBOX", "CRASH"]
 UIStatusText: TypeAlias = Literal["online", "safestop", "working", "no network" , "ooo"]
 
@@ -334,7 +334,7 @@ class ExampleErpBackend:
 # JOB FLOWS
 # ============================================================
 
-#for email-pipeline
+#for email pipeline
 class MailFlow:
     def __init__(self, log_system, log_ui, friends_repo, is_within_operating_hours, network_service, job_handlers, pre_handover_executor) -> None:
         self.log_system = log_system
@@ -563,7 +563,7 @@ class MailFlow:
             return self.mail_backend_shared
         raise ValueError(f"unknown job_source_type={mail.job_source_type}")
 
-# for scheduledjobs-pipeline
+# for scheduledjobs pipeline
 class ScheduledFlow:
     ''' scheduled jobs pipeline '''
     def __init__(self, log_system, log_ui, audit_repo, job_handlers, in_dev_mode, pre_handover_executor) -> None:
@@ -690,7 +690,7 @@ class ScheduledFlow:
 
 # for decision-making on the found job
 class PreHandoverExecutor:
-    def __init__(self, log_system, log_ui, update_ui_status, refresh_jobs_done_today_display, ui_dot_tk_set_show_recording_overlay, generate_job_id, recording_service, audit_repo, in_dev_mode) -> None:
+    def __init__(self, log_system, log_ui, update_ui_status, ui_dot_tk_set_show_recording_overlay, generate_job_id, recording_service, audit_repo, in_dev_mode) -> None:
         self.in_dev_mode = in_dev_mode
         self.log_system = log_system
         self.log_ui = log_ui
@@ -698,7 +698,6 @@ class PreHandoverExecutor:
         self.generate_job_id = generate_job_id
         self.audit_repo = audit_repo
         self.update_ui_status = update_ui_status
-        self.refresh_jobs_done_today_display = refresh_jobs_done_today_display
         self.ui_dot_tk_set_show_recording_overlay = ui_dot_tk_set_show_recording_overlay
     
     def validate_decision_itself(self, decision: JobDecision) -> None:
@@ -738,7 +737,7 @@ class PreHandoverExecutor:
         # ------------------------------------------------------------
         elif action == "REPLY_AND_DELETE":
             if decision.job_status != "REJECTED":
-                raise ValueError("REPLY_AND_DELETE requires job_status DONE or REJECTED")
+                raise ValueError("REPLY_AND_DELETE requires job_status REJECTED")
 
             if decision.error_message is None:
                 raise ValueError("REPLY_AND_DELETE requires error_message (reply text)")
@@ -943,8 +942,6 @@ class PreHandoverExecutor:
                     error_message=decision.error_message,
                 )
 
-                if decision.job_status == "DONE":
-                    self.refresh_jobs_done_today_display()
                 return None
 
         # ------------------------------------------------------------
@@ -1092,7 +1089,7 @@ class PostHandoverFinalizer:
     def poll_once(self, handover_data) -> None:
         # rebuild active_job objekt after cold start
         active_job = self.rebuild_active_job(handover_data)
-        
+
         #get id and type
         job_id = active_job.job_id
         job_type = active_job.job_type
@@ -1122,6 +1119,8 @@ class PostHandoverFinalizer:
     
 
     def finalize_job_result(self, ok_or_error, active_job: ActiveJob):
+
+        job_status: JobStatus
 
         if ok_or_error == "ok":
             job_status = "DONE"
@@ -1168,8 +1167,6 @@ class PostHandoverFinalizer:
 
     def create_reply_body(self, active_job: ActiveJob, job_status: str, error_message: str | None, ) -> str:
         job_id = active_job.job_id
-        job_type = active_job.job_type
-        source_ref = active_job.source_ref
 
         recording_path = self.get_recording_path_for_user(active_job)
 
@@ -1467,7 +1464,7 @@ class ExampleJob3Handler:
 # HANDOVER / IPC
 # ============================================================
 
-# for file-IPC
+# for file IPC
 class HandoverRepository:
     ''' HANDOVER_FILE is the I/O between this script and the RPA tool  '''
 
@@ -1613,7 +1610,7 @@ class HandoverRepository:
 # RECORDING / SAFESTOP / INFRASTRUCTURE
 # ============================================================
                           
-# for screen-recording
+# for screen recording
 class RecordingService:
     ''' screen-recording to capture all RPA tool screen-activity '''
 
@@ -1917,7 +1914,7 @@ class FriendsRepository:
         self.log_system(f"returning: {result}")
         return result
 
-# for network-check
+# for network check
 class NetworkService:
     ''' checks if the computer is connected to company LAN '''
 
@@ -1965,7 +1962,7 @@ class NetworkService:
         
         return online
 
-# for SQLite
+# for audit-style log
 class AuditRepository:
     ''' handles job_audit.db, an audit-style robot activity log '''
     def __init__(self, log_system) -> None:
@@ -1998,7 +1995,7 @@ class AuditRepository:
         conn.close()
 
 
-    def insert_job(self, job_id, email_address=None, email_subject=None, source_ref=None, job_type=None, job_start_date=None, job_start_time=None, job_finish_time=None, job_status=None, final_reply_sent=None, job_source_type=None, error_code=None,error_message=None,) -> None:
+    def insert_job(self, job_id, email_address=None, email_subject=None, source_ref=None, job_type: JobType | None=None, job_start_date=None, job_start_time=None, job_finish_time=None, job_status: JobStatus | None=None, final_reply_sent=None, job_source_type:JobSourceType | None=None, error_code=None, error_message=None,) -> None:
         # use for new row
 
 
@@ -2036,7 +2033,7 @@ class AuditRepository:
         conn.close()
 
 
-    def update_job(self, job_id, email_address=None, email_subject=None, source_ref=None, job_type=None, job_start_date=None, job_start_time=None, job_finish_time=None, job_status=None, final_reply_sent=None, job_source_type=None, error_code=None, error_message=None,) -> None:
+    def update_job(self, job_id, email_address=None, email_subject=None, source_ref=None, job_type: JobType | None=None, job_start_date=None, job_start_time=None, job_finish_time=None, job_status: JobStatus | None=None, final_reply_sent=None, job_source_type:JobSourceType | None=None, error_code=None, error_message=None,) -> None:
         # example use: self.audit_repo.update_job(job_id=20260311124501, job_type="job1")
 
         all_fields = {
@@ -2785,7 +2782,7 @@ class RobotRuntime:
             "job2": ExampleJob2Handler(self.log_system), 
             "job3": ExampleJob3Handler(self.log_system),}
     
-        self.pre_handover_executor = PreHandoverExecutor(log_system=self.log_system, log_ui=self.log_ui, update_ui_status=self.update_ui_status, refresh_jobs_done_today_display=self.refresh_jobs_done_today_display, ui_dot_tk_set_show_recording_overlay=self.ui.tk_set_show_recording_overlay, generate_job_id=self.generate_job_id, recording_service=self.recording_service, audit_repo=self.audit_repo, in_dev_mode=self.in_dev_mode)
+        self.pre_handover_executor = PreHandoverExecutor(log_system=self.log_system, log_ui=self.log_ui, update_ui_status=self.update_ui_status, ui_dot_tk_set_show_recording_overlay=self.ui.tk_set_show_recording_overlay, generate_job_id=self.generate_job_id, recording_service=self.recording_service, audit_repo=self.audit_repo, in_dev_mode=self.in_dev_mode)
         self.scheduled_flow = ScheduledFlow(log_system=self.log_system, log_ui=self.log_ui, audit_repo=self.audit_repo, job_handlers=self.job_handlers, in_dev_mode=self.in_dev_mode, pre_handover_executor=self.pre_handover_executor)
         self.mail_flow = MailFlow(self.log_system, self.log_ui, self.friends_repo, self.is_within_operating_hours, self.network_service, self.job_handlers, self.pre_handover_executor)
         self.post_handover_finalizer = PostHandoverFinalizer(self.log_system, self.log_ui, self.audit_repo, self.job_handlers, self.recording_service, self.ui.tk_set_hide_recording_overlay, self.refresh_jobs_done_today_display, self.in_dev_mode)
