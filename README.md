@@ -92,7 +92,7 @@ The diagram shows how:
 * State is synchronized via `handover.json`
 * Failures transition the system into safestop
 * Your RPA tool must follow this model
-* Safestop is an emergency mode that breaks the state synchronization
+* Safestop is an emergency mode that breaks the loop
 
 ## Features
 
