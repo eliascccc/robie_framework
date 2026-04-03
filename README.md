@@ -54,12 +54,12 @@ This project separates responsibilities between the Orchestrator and the RPA too
 
 * The **Orchestrator (this project)** handles:
   - how jobs enter the system (e.g. via email)
-  - how jobs are discovered autonomously (e.g. queries or data sources)
+  - how jobs are discovered autonomously (e.g. queries)
   - access control and validation
   - job state tracking and audit logging
-  - preparing payloads and handing work over to an RPA tool
+  - preparing payloads and handover to an RPA tool
   - verifying results after execution
-  - handling failures and entering a controlled safestop state
+  - handling failures
 
 * The **RPA tool** handles:
   - UI automation (clicks, keyboard input, ERP/UI interaction)
@@ -94,7 +94,7 @@ The diagram shows how:
 * The Orchestrator and the RPA tool run independently
 * Both operate in their own loops
 * State is synchronized via `handover.json`
-* Failures transition the system into safestop
+* Failures transition the system into a safestop
 * Safestop is an emergency mode that breaks the loop
 * Your RPA tool must follow this model
 
@@ -108,19 +108,18 @@ The diagram shows how:
 * File-based IPC (`handover.json`)
 * SQLite audit-style logging (`job_audit.db`)
 * Crash-safe mode (`safestop`)
-* Degraded emergency mode after fatal errors
 * Controlled restart mechanism (`restart.flag`)
 * Stop hook from the RPA side (`stop.flag`)
 * Built-in screen recording (ffmpeg)
 * Final user replies after verification (DONE / FAIL)
+* Screen-recording link included in final reply
 * Runs without administrator rights
 * Cross-platform (Windows and Linux)
-* Screen-recording path included in final reply if available
 * Single-file runtime (`main.py`) for easy sharing and inspection
 
 ---
 
-## Email Pipeline
+## Email driven jobs (personal inbox)
 
 * Access controlled via `friends.xlsx`
 * Only allowed users can trigger jobs
@@ -233,14 +232,13 @@ This project is much smaller, local-first, and designed around business-triggere
 
 Most users will need to replace or customize:
 
-- the mail backend
-- the ERP/data backend
+- the mail backend (e.g. connect a real personal inbox such as rpa@yourcompany.com)
+- the query/ERP backend
 - the job handlers
 - the network health check path
-- the screen-recording destination
+- the screen-recording destination (a shared network drive)
 - the operating hours
 - the RPA tool implementation
-
 
 ---
 
