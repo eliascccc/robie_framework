@@ -1,24 +1,23 @@
 # Robot Runtime
 
-A small Python runtime for email- and query-driven RPA
+A local runtime for email- and query-driven RPA — where Python owns the logic and RPA tools own the screen.
 
 ---
 
 ## Overview
 
 Robot Runtime is a local Python runtime for small-scale RPA deployments.
-The term “runtime” refers to everything except the UI automation itself:
+The term “runtime” refers to everything except the UI automation:
 job intake, orchestration, decision logic, logging, and result verification.
 UI automation is delegated to an external RPA tool such as UiPath or Power Automate.
 Together, the runtime and the RPA tool form the robot.
 
 This project is designed as a simple way to get started with RPA in a business unit. It runs on a single machine as a single Python file.
-The principle is: **screenclicks → handled by the RPA tool. The rest (logic and orchestration) → this python project**
+The principle is: **UI interaction → handled by the RPA tool. The rest (logic and orchestration) → this Python runtime**
 
-
-Unlike traditional RPA setups — where a user selects and runs a predefined automation —
-this runtime is event-driven. It continuously listens for incoming work (such as emails or data conditions),
-interprets what it means, decides what action to take, and then executes via an RPA tool.
+Unlike traditional RPA setups — where users manually trigger predefined automations —
+this runtime is event-driven. It continuously listens for incoming work (emails or data conditions),
+interprets the request, decides what action to take, and executes via an RPA tool.
 
 ---
 
@@ -64,7 +63,7 @@ They communicate through a file-based IPC mechanism (`handover.json`).
 The diagram shows:
 
 * How the Runtime and the RPA tool run independently
-* How your RPA tool must be implemented
+* How your RPA tool should be implemented
 
 ---
 
@@ -83,8 +82,6 @@ The diagram shows:
 * Windows or Linux, with environment-specific setup
 
 ---
-
-
 
 ## Running the Project
 
@@ -146,7 +143,8 @@ Python is great for logic and data processing, but:
 * It cannot reliably interact with arbitrary GUIs
 * Many business systems (ERP, legacy apps) require UI automation
 
-This project capitalize on the simplicity and large resources available for Python ecosystem.
+This project leverages the simplicity and rich ecosystem of Python for logic,
+while relying on RPA tools for reliable UI automation.
 
 ---
 
