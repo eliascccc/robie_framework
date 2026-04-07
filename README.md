@@ -7,12 +7,18 @@ A small Python runtime for email- and query-driven RPA
 ## Overview
 
 Robot Runtime is a local Python runtime for small-scale RPA deployments.
-'Runtime' is this text refers to job intake, local orchestration, decision logic, logging, and result verification.
-The final part, UI automation, is delegated to an external RPA tool such as Power Automate or UiPath Studio.
-Together, the Runtime and the RPA tool form the robot.
+The term “runtime” refers to everything except the UI automation itself:
+job intake, orchestration, decision logic, logging, and result verification.
+UI automation is delegated to an external RPA tool such as UiPath or Power Automate.
+Together, the runtime and the RPA tool form the robot.
 
-This project is useful for getting started with automating tasks in a business unit. It runs on a single machine with one single file.
-The principle is: **Python owns the logic. The RPA tool owns the screen**
+This project is designed as a simple way to get started with RPA in a business unit. It runs on a single machine as a single Python file.
+The principle is: **screenclicks → handled by the RPA tool. The rest (logic and orchestration) → this python project**
+
+
+Unlike traditional RPA setups — where a user selects and runs a predefined automation —
+this runtime is event-driven. It continuously listens for incoming work (such as emails or data conditions),
+interprets what it means, decides what action to take, and then executes via an RPA tool.
 
 ---
 
@@ -29,28 +35,25 @@ The runtime supports two types of job sources: emails and queries.
 A user sends an email → Python validates and prepares the job → writes to `handover.json` → RPA executes UI actions → Python verifies and responds.
 
 #### Query-driven
-Python polls a data source → detects a valid case → prepares payload → signals RPA → RPA executes → Python verifies the outcome.
-
+Python polls a data source → detects a valid case → prepares a payload → signals RPA → RPA executes → Python verifies the outcome.
 
 ---
 
-## Key Idea
-This project separates responsibilities between the Orchestrator and the RPA tool:
+## Key idea
 
-* The **Runtime (this project)** handles:
-  - how jobs enter the system (e.g. via email)
-  - how jobs are discovered autonomously (e.g. queries)
-  - preparing payloads and handover to an RPA tool
-  - verifying results after execution
-  - handling failures
+This project separates responsibilities between the runtime and the RPA tool:
+
+* The **runtime (this project)** handles:
+  - job intake (email / queries)
+  - access control and validation
+  - decision logic
+  - preparing payloads and handover
+  - verification and failure handling
 
 * The **RPA tool** handles:
-  - UI automation (clicks, keyboard input, ERP/UI interaction)
+  - UI automation (clicks, keyboard input, ERP interaction)
 
 They communicate through a file-based IPC mechanism (`handover.json`).
-
----
-
 
 ---
 
@@ -143,13 +146,13 @@ Python is great for logic and data processing, but:
 * It cannot reliably interact with arbitrary GUIs
 * Many business systems (ERP, legacy apps) require UI automation
 
-This project capitalize on the simplicity and large resources avaliable for Python ecosystem.
+This project capitalize on the simplicity and large resources available for Python ecosystem.
 
 ---
 
 #### Why not use an enterprise orchestrator?
 
-Enterprise orchestrators (e.g. UiPath Orchestrator, Control Room, [orchestrator_rpa](https://github.com/daferferso/orchestrator_rpa), [orchestrator_rpa](https://github.com/daferferso/orchestrator_rpa), [openorchestrator](https://github.com/itk-dev-rpa/OpenOrchestrator)
+Enterprise orchestrators (e.g. UiPath Orchestrator, Control Room, [orchestrator_rpa](https://github.com/daferferso/orchestrator_rpa), [openorchestrator](https://github.com/itk-dev-rpa/OpenOrchestrator)
 
 * Require infrastructure, setup, and licensing
 * Are designed for large-scale, multi-bot environments
