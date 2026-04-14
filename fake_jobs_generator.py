@@ -4,9 +4,14 @@ from pathlib import Path
 from email.message import EmailMessage
 from email.utils import formatdate, make_msgid
 from openpyxl import load_workbook #type: ignore
+import os
+import sys
+import subprocess
+import platform
 
-# to create fake email jobs
+
 class FakeEmailjobsGenerator:
+    ''' to create fake email jobs'''
     #written by AI
     BASE_DIR = Path(__file__).resolve().parent
     PIPELINE_DIR = BASE_DIR / "personal_inbox"
@@ -88,7 +93,7 @@ class FakeEmailjobsGenerator:
             from_email="alice@example.com",
             to_email="robot@company.local",
             subject="PING",
-            body="ping",
+            body="Hello\nI'm sending you a ping\nBR,\n Alice",
         )
         return self.write_eml_to_inbox(msg, prefix="ping")
 
@@ -192,10 +197,9 @@ class FakeEmailjobsGenerator:
     def main(self) -> None:
         self.create_example_attachment_files()
 
-        print("FakeEmailjobsGenerator: i'm alive")
 
-# to create fake scheduled jobs
-class FakeSchedulejobsGenerator:
+class FakeQueryjobsGenerator:
+    '''to create fake ERP jobs '''
 
     def add_random_row(self, path="Example_ERP_table.xlsx") -> str:
 
@@ -221,26 +225,27 @@ class FakeSchedulejobsGenerator:
         wb.close()
         return erp_order_number
 
-# produce random job from above
+
 class FakeJobsGenerator:
+    ''' produce random job from above'''
     def __init__(self) -> None:
 
         self.fake_emailjob = FakeEmailjobsGenerator()
-        self.fake_scheduledjob = FakeSchedulejobsGenerator()
+        self.fake_queryjob = FakeQueryjobsGenerator()
 
 
     def run(self):
-
 
         while True:
             try:
                 input("\nHit Enter to generate an random job")
                 if random.randint(0,1) == 1:
+                #if 1==1:
                     path = self.fake_emailjob.create_random_mail()
                     print(f"Created emailjob: {path.name}")
                 else:
-                    erp_order_number = self.fake_scheduledjob.add_random_row()
-                    print(f"Created scheduledjob: {erp_order_number}")
+                    erp_order_number = self.fake_queryjob.add_random_row()
+                    print(f"Created queryjob: {erp_order_number}")
 
             except KeyboardInterrupt:
                 print("\nStopped.")
@@ -250,151 +255,10 @@ class FakeJobsGenerator:
                 time.sleep(1)
 
 
-# to simualte the the behaviour of the RPA tool implementation 
-class RPAToolSimulator:
-
-    def run(self):
-
-        self.log_system("RPAToolSimulator: i'm alive")
-        print("RPAToolSimulator: i'm alive")
-        
-        while True:
-
-            time.sleep(1)
-
-            # read handover
-            with open("handover.json", "r", encoding="utf-8") as f:
-                handover_data = json.load(f)
-
-            # claim workflow if "job_queued"
-            ipc_state = handover_data.get("ipc_state")
-            if ipc_state != "job_queued":
-                continue
-
-            # singal to Orchestrator the workflow is claimed 
-            handover_data["ipc_state"] = "job_running"
-            with open("handover.json", "w", encoding="utf-8") as f:
-                json.dump(handover_data, f, indent=2)
-            
-            # identify job type
-            job_type = handover_data.get("job_type")
-            job_id = handover_data.get("job_id")
-
-            
-            #time.sleep(2) # simulate some time... 
-
-            # ----------------------------------------------
-            # JOB1
-            # ----------------------------------------------
-            if job_type == "job1":
-                # retrive job-specific data  
-                rpa_payload = handover_data.get("rpa_payload", {})
-                erp_order_number = rpa_payload.get("order_number")  
-                new_qty = rpa_payload.get("target_order_qty")
-
-                # simulation of job1 screenactiviy
-                self.log_system(f"activities on screen_1 in ERP completed", job_id)
-                self.log_system(f"activities on screen_2 in ERP completed", job_id)
-                self.simulate_RPA_result_job1(erp_order_number, new_qty)
-
-                # ready to verify result
-                handover_data["ipc_state"] = "job_verifying"
-            
-            # ----------------------------------------------
-            # JOB3
-            # ----------------------------------------------
-            elif job_type == "job3":
-                # retrive job-specific data
-                rpa_payload = handover_data.get("rpa_payload", {})
-                erp_order_number = rpa_payload.get("source_ref")  
-                new_qty = rpa_payload.get("target_order_qty")
-
-                #simulation of job3 screenactiviy
-                self.log_system(f"activities on screen_1 in ERP completed", job_id)
-                self.log_system(f"activities on screen_2 in ERP completed", job_id)
-                self.simulate_RPA_result_job1(erp_order_number, new_qty) # change to a "job3"-activity
-
-                # ready to verify result
-                handover_data["ipc_state"] = "job_verifying"
-
-            # ----------------------------------------------
-            # PING
-            # ----------------------------------------------
-            elif job_type == "ping":
-
-                # play a sound
-                if platform.system() == "Windows":
-                    import winsound
-                    winsound.Beep(1000, 300) #type: ignore
-
-                elif platform.system() == "Linux":
-                    print("\a", end="", flush=True)
-
-                self.log_system(f"made a ping", job_id)
-
-
-                # ready to verify result
-                handover_data["ipc_state"] = "job_verifying"
-            
-            # ----------------------------------------------
-            # UNKOWN JOB
-            # ----------------------------------------------
-            else:
-                self.log_system(f"no logic for job_type{job_type}")
-
-                # error signal
-                handover_data["ipc_state"] = "safestop"
-
-
-            # ----------------------------------------------
-            # Handover to Orchestrator
-            # ----------------------------------------------
-            with open("handover.json", "w", encoding="utf-8") as f:
-                json.dump(handover_data, f, indent=2)
-
-            self.log_system(f"RPASimulator.run() done, ipc_state: job_running -> job_verifying", handover_data.get("job_id"))
-
-
-    def log_system(self, event_text: str, job_id=None):
-        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-   
-        log_line = f"{timestamp} | rpa | job_id={job_id or ''} | RPAToolSimulator...() | {event_text}"
-
-        with open("system.log", "a", encoding="utf-8") as f:
-            f.write(log_line + "\n")
-            f.flush()
-         
-
-
-    
-
-    def simulate_RPA_result_job1(self, erp_order_number: str, new_qty: int, path="Example_ERP_table.xlsx"):
-        # here, updating a row.  IRL: updating in ERP
-
-        assert erp_order_number is not None
-        assert new_qty is not None
-
-        wb = load_workbook(path)
-        ws = wb.active
-        assert ws is not None
-
-        for row in ws.iter_rows(min_row=2):
-            if str(row[0].value) == str(erp_order_number):
-                row[1].value = int(new_qty) #updating to the new value 'in ERP'     # type: ignore
-                wb.save(path)
-                wb.close()
-                return True
-
-
 def main():
 
     if not os.path.isfile("main.py"):
         raise RuntimeError("Place this file in main.py directory")
-
-    #rpa_tool_simulator = RPAToolSimulator()
-    #threading.Thread(target=rpa_tool_simulator.run, daemon=True).start() #replace with RPA tool
-    
-    time.sleep(0.01)
 
     fakejobs_generator = FakeJobsGenerator() # replace with real sources
     fakejobs_generator.run()
