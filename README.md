@@ -83,49 +83,25 @@ The diagram shows:
 * Python 3.10+
 * `openpyxl`
 * `ffmpeg` (optional, for screen recording)
-
----
-
-### Start
-
-The recommended (production-like) setup is to run `main.py` from the RPA tool according to the architecture diagram.  
-The RPA tool starts and stops the runtime, which makes the robot behave as a single unit.
+* a mailbox such as rpa@yourcompany.com (optional)
 
 ---
 
 
 ### Quick demo
 
-1:  Start `rpa_tool_simulator.py`  
-2:  Press `1` to run the robot  
-3:  Open a new terminal and run fake_jobs_generator.py  
-4:  Press Enter to generate random jobs  
-5:  Watch the dashboard  
-(6:  Add `custom_*_jobs.py` files for more examples)
+1:  Download `main.py`, `rpa_tool_simulator.py`  and `fake_jobs_generator.py`  
+2:  Start `rpa_tool_simulator.py`  
+3:  Press `1` to run the robot  
+4:  Open a new terminal and run `fake_jobs_generator.py`  
+5:  Press Enter to generate random jobs  
+6:  Watch the dashboard  
 
----
-
-### Testing / development
-
-Use the included dev tools to simulate real inputs and runtime behavior:
-
-* `fake_jobs_generator.py` – to generate test jobs (emails / data)
-* `rpa_tool_simulator.py` – to simulate the RPA tool and start main.py in the intended way
-
-Below files contain example job handlers and are automatically loaded if present. Add your own query and/or email jobs by modifying them.
+Below files contain more examples and are automatically loaded if present. Add your own query and/or email jobs by modifying them.
 
 * `custom_personal_mail_jobs.py`
 * `custom_shared_mail_jobs.py`
 * `custom_query_jobs.py`
-
----
-
-## Deployment requirements
-
-- a dedicated machine or “extra laptop”
-- a mailbox such as rpa@yourcompany.com
-- an external RPA tool
-- environment-specific setup for mail backend, ERP/query backend, job handlers, recording path, operating hours, and network health check
 
 ---
 
